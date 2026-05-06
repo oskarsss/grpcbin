@@ -1,10 +1,17 @@
+# syntax=docker/dockerfile:1.7
+
 # dynamic config
 ARG             BUILD_DATE
 ARG             VCS_REF
 ARG             VERSION
+ARG             GO_VERSION=1.18.1
+ARG             ALPINE_VERSION=3.15.1
 
 # build
-FROM            golang:1.18.1-alpine as builder
+FROM            --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder
+ARG             TARGETOS
+ARG             TARGETARCH
+ARG             TARGETVARIANT
 RUN             apk add --no-cache git gcc musl-dev make
 ENV             GO111MODULE=on
 WORKDIR         /go/src/moul.io/grpcbin
@@ -12,10 +19,14 @@ COPY            go.* ./
 RUN             go mod download
 COPY            . ./
 #RUN             make install
-RUN             go build -o /go/bin/grpcbin -ldflags "-extldflags \"-static\"" -v
+RUN             set -eux; \
+                goarm="${TARGETVARIANT#v}"; \
+                if [ "$TARGETARCH" != "arm" ]; then goarm=""; fi; \
+                CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" GOARM="$goarm" \
+                  go build -o /go/bin/grpcbin -ldflags "-extldflags \"-static\"" -v
 
 # minimalist runtime
-FROM alpine:3.15.1
+FROM            --platform=$TARGETPLATFORM alpine:${ALPINE_VERSION}
 LABEL           org.label-schema.build-date=$BUILD_DATE \
                 org.label-schema.name="grpcbin" \
                 org.label-schema.description="" \

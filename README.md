@@ -31,6 +31,41 @@ $ docker run -it --rm -p 9000:9000 -p 9001:9001 moul/grpcbin
 2017/12/18 14:48:01 listening on :9001 (secure)
 ```
 
+## Build a multi-arch image
+
+This fork can build and publish `linux/amd64` and `linux/arm64` container
+images with Docker Buildx. The GitHub Actions workflow in
+`.github/workflows/container.yml` publishes to GitHub Container Registry:
+
+```console
+ghcr.io/<github-owner>/grpcbin:latest
+ghcr.io/<github-owner>/grpcbin:git-<short-sha>
+```
+
+For this fork, the image is:
+
+```console
+ghcr.io/oskarsss/grpcbin:latest
+```
+
+To build and push manually:
+
+```console
+$ docker login ghcr.io
+$ docker buildx create --use --name grpcbin-builder
+$ docker buildx build \
+    --platform linux/amd64,linux/arm64 \
+    -t ghcr.io/oskarsss/grpcbin:latest \
+    -t ghcr.io/oskarsss/grpcbin:git-$(git rev-parse --short HEAD) \
+    --push .
+```
+
+To build only for the local machine:
+
+```console
+$ docker build -t grpcbin:local .
+```
+
 ## Example
 
 See examples on a the dedicated repo: [grpcbin-example](https://github.com/moul/grpcbin-example)

@@ -1,0 +1,8 @@
+.git
+.github
+.assets
+.prod
+dist
+coverage.txt
+go-*.log
+go-test.json
